@@ -27,16 +27,24 @@ const GRAVITY = 9.81;
 // target angle. There is no auto-leveling — release the stick and the craft
 // keeps whatever attitude/angular momentum it had, same as acro mode on a
 // real drone. angularDamping below is just aerodynamic drag, not a leveler.
-const PITCH_TORQUE = 10; // N·m per kg, about the body's local right axis
-const ROLL_TORQUE = 10; // N·m per kg, about the body's local forward axis
-const YAW_TORQUE = 5; // N·m per kg, about the body's local up axis
-const ANGULAR_DAMPING = 0.4;
+// Torque and damping are scaled up together (vs. an earlier 10/10/5 torque
+// with 0.4 damping) to keep roughly the same top angular rate while cutting
+// the settling time ~4x — the earlier tuning felt sluggish because it took
+// a long time both to spin up to speed and to stop spinning once the stick
+// was released.
+const PITCH_TORQUE = 40; // N·m per kg, about the body's local right axis
+const ROLL_TORQUE = 40; // N·m per kg, about the body's local forward axis
+const YAW_TORQUE = 20; // N·m per kg, about the body's local up axis
+const ANGULAR_DAMPING = 1.6;
 
 // Collective: Shift ramps blade pitch up while held. Release it (or hold C)
 // and it decays on its own — the rotor "weakens" instead of holding its last
-// value like a lever.
+// value like a lever. Decay is intentionally much slower than the ramp-up:
+// hover needs collective ~0.56 (weight / MAX_LIFT_THRUST), so a fast decay
+// blew through that point almost instantly on release and felt like the
+// engine cut out and the craft dropped, rather than a controlled descent.
 const COLLECTIVE_RATE = 0.9; // units/s ramp-up while Shift is held
-const COLLECTIVE_DECAY = 0.6; // units/s natural weakening while Shift is not held
+const COLLECTIVE_DECAY = 0.25; // units/s natural weakening while Shift is not held
 const MAX_LIFT_THRUST = 1.8; // multiple of weight produced at full collective, along local up
 
 export function Helicopter() {
@@ -124,7 +132,7 @@ export function Helicopter() {
       ref={bodyRef}
       position={[0, 2, 0]}
       colliders={false}
-      linearDamping={0.6}
+      linearDamping={1}
       angularDamping={ANGULAR_DAMPING}
       enabledRotations={[true, true, true]}
     >

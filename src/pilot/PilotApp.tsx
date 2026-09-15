@@ -6,6 +6,7 @@ import "../scene.css";
 import { Helicopter } from "./Helicopter";
 import { HelicopterCamera } from "./HelicopterCamera";
 import { TouchControls } from "./TouchControls";
+import { ControlHint } from "./ControlHint";
 import { Targets } from "../gunner/Targets";
 import { BulletEffects } from "../combat/BulletEffects";
 import { ConnectionStatus } from "../net/ConnectionStatus";
@@ -35,6 +36,7 @@ export function PilotApp() {
         <Sky sunPosition={[10, 20, 10]} />
       </Canvas>
       <TouchControls />
+      <ControlHint />
       <ConnectionStatus />
     </div>
   );
