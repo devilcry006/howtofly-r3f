@@ -1,0 +1,49 @@
+.touch-controls {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: none;
+}
+
+/* Only show on touch/coarse-pointer devices; keyboard stays the desktop input. */
+@media (pointer: coarse) {
+  .touch-controls {
+    display: block;
+  }
+}
+
+.joystick {
+  position: absolute;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.joystick-left {
+  left: max(28px, env(safe-area-inset-left));
+}
+
+.joystick-right {
+  right: max(28px, env(safe-area-inset-right));
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  will-change: transform;
+}

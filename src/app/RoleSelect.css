@@ -1,0 +1,34 @@
+.role-select {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.role-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.role-buttons button {
+  font-size: 18px;
+  padding: 16px 28px;
+  border-radius: 12px;
+  border: 2px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.role-buttons button:hover {
+  border-color: var(--accent);
+}
