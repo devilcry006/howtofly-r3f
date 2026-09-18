@@ -37,7 +37,7 @@ export const controlInput = {
   },
 };
 
-type Key = "w" | "s" | "a" | "d" | "q" | "e" | "shift" | "c";
+type Key = "w" | "s" | "a" | "d" | "q" | "e" | "shift" | "control";
 
 const pressed: Record<Key, boolean> = {
   w: false,
@@ -47,14 +47,14 @@ const pressed: Record<Key, boolean> = {
   q: false,
   e: false,
   shift: false,
-  c: false,
+  control: false,
 };
 
 function recomputeKeyboard() {
   keyboard.pitch = (pressed.s ? 1 : 0) - (pressed.w ? 1 : 0);
   keyboard.roll = (pressed.d ? 1 : 0) - (pressed.a ? 1 : 0);
   keyboard.yaw = (pressed.q ? 1 : 0) - (pressed.e ? 1 : 0);
-  keyboard.collective = pressed.shift ? 1 : pressed.c ? -1 : 0;
+  keyboard.collective = pressed.shift ? 1 : pressed.control ? -1 : 0;
 }
 
 // Engine ignition and reset are discrete one-shot actions (a key or a touch
@@ -82,6 +82,10 @@ const resetAction = makeAction();
 export const requestReset = resetAction.request;
 export const consumeReset = resetAction.consume;
 
+const viewToggleAction = makeAction();
+export const requestViewToggle = viewToggleAction.request;
+export const consumeViewToggle = viewToggleAction.consume;
+
 export function bindKeyboardControls() {
   const onKeyDown = (e: KeyboardEvent) => {
     const rawKey = e.key.toLowerCase();
@@ -95,6 +99,8 @@ export function bindKeyboardControls() {
       requestEngineToggle();
     } else if (rawKey === "r") {
       requestReset();
+    } else if (rawKey === "c") {
+      requestViewToggle();
     }
   };
 
@@ -117,7 +123,7 @@ export function bindKeyboardControls() {
 
 // x, y are normalized stick displacement in -1..1, screen-space (x: right
 // positive, y: down positive) — as reported directly by a touch joystick.
-// Left stick: x -> yaw, y -> collective (up = ramp up, matches Shift/C).
+// Left stick: x -> yaw, y -> collective (up = ramp up, matches Shift/Ctrl).
 // Right stick: x -> roll, y -> pitch (up = nose down/forward, matches W/S).
 export function setTouchStick(side: "left" | "right", x: number, y: number) {
   if (side === "left") {

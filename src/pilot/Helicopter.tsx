@@ -10,6 +10,7 @@ import {
 import { flightState } from "./flightState";
 import { bindKeyboardControls, consumeEngineToggle, consumeReset, controlInput } from "./inputState";
 import { engineState } from "./engineState";
+import { modelGroupRef } from "./modelGroupRef";
 import { sendFlightUpdate } from "../net/socket";
 
 const MODEL_SRC = "./models/helicopters_mh-6_little_bird/scene.gltf";
@@ -100,11 +101,13 @@ const ZERO_VECTOR = { x: 0, y: 0, z: 0 };
 
 export function Helicopter() {
   const bodyRef = useRef<RapierRigidBody>(null);
-  // Nested purely so we can read an interpolated world position for
-  // flightState (react-three-rapier smooths this between fixed physics
-  // steps); rotation is no longer set manually here, it just rides the
-  // RigidBody's own physics rotation.
-  const modelRef = useRef<THREE.Group>(null);
+  // Shared module-level ref (see modelGroupRef.ts) rather than a local
+  // useRef: HelicopterCamera reparents the FPS camera onto this exact node
+  // for the cockpit view. Also used locally to read an interpolated world
+  // position for flightState (react-three-rapier smooths this between fixed
+  // physics steps); rotation is no longer set manually here, it just rides
+  // the RigidBody's own physics rotation.
+  const modelRef = modelGroupRef;
 
   const collective = useRef(0); // 0..1, ramps/decays, never snaps
 

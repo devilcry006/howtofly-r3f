@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import "./TouchControls.css";
-import { requestEngineToggle, requestReset, setTouchStick } from "./inputState";
+import { requestEngineToggle, requestReset, requestViewToggle, setTouchStick } from "./inputState";
 
 // Max distance (px) the knob can travel from center, matching the CSS
 // base/knob sizes below (60px base radius - 28px knob radius - a small margin).
@@ -75,8 +75,8 @@ function JoystickPad({ side }: { side: "left" | "right" }) {
 
 // Two on-screen virtual joysticks for touch devices, mirroring a Mode-2 RC
 // transmitter: left stick = yaw + collective, right stick = pitch + roll.
-// Hidden on fine-pointer (mouse/trackpad) devices via CSS. The engine and
-// reset buttons are discrete one-shot actions (mirror the I/R keys), not stick axes.
+// Hidden on fine-pointer (mouse/trackpad) devices via CSS. The engine, reset
+// and view buttons are discrete one-shot actions (mirror I/R/Ctrl), not stick axes.
 export function TouchControls() {
   return (
     <div className="touch-controls">
@@ -101,6 +101,16 @@ export function TouchControls() {
         }}
       >
         ↺ reset
+      </button>
+      <button
+        type="button"
+        className="view-button"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          requestViewToggle();
+        }}
+      >
+        👁 view
       </button>
     </div>
   );
