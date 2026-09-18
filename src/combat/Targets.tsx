@@ -3,9 +3,9 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TARGETS, hitTargets } from "./targetState";
 
-// Static, non-physics practice targets: the gunner raycasts against these
-// directly (GunnerFireControl), and destroyed state is just a shared id set
-// kept visually in sync here every frame — no per-target React state needed.
+// Static, non-physics practice targets: the pilot raycasts against these
+// directly (FireControl), and destroyed state is just a shared id set kept
+// visually in sync here every frame — no per-target React state needed.
 export function Targets() {
   const refs = useRef<Record<string, THREE.Mesh | null>>({});
 

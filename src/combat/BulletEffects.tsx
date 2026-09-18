@@ -91,8 +91,6 @@ function ImpactBurst({ impact }: { impact: Impact }) {
   );
 }
 
-// One instance lives in each Canvas (Pilot + Gunner) so both devices see the
-// same tracer/impact even though only the gunner ever fires.
 export function BulletEffects() {
   const [, forceTick] = useState(0);
   const lastRevision = useRef(-1);

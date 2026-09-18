@@ -50,7 +50,8 @@
 
 .engine-button,
 .reset-button,
-.view-button {
+.view-button,
+.fire-button {
   position: absolute;
   top: max(10px, env(safe-area-inset-top));
   left: 50%;
@@ -67,13 +68,17 @@
 }
 
 .engine-button {
-  transform: translateX(calc(-50% - 100px));
-}
-
-.view-button {
-  transform: translateX(-50%);
+  transform: translateX(calc(-50% - 150px));
 }
 
 .reset-button {
-  transform: translateX(calc(-50% + 100px));
+  transform: translateX(calc(-50% - 50px));
+}
+
+.view-button {
+  transform: translateX(calc(-50% + 50px));
+}
+
+.fire-button {
+  transform: translateX(calc(-50% + 150px));
 }

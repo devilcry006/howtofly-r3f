@@ -4,7 +4,7 @@ import "./EngineStatus.css";
 
 // Small readout of engine on/off + rotor rpm so it's clear why the craft
 // won't lift off yet — polled rather than event-driven since engineState is
-// plain mutable module state, not React state (see ConnectionStatus).
+// plain mutable module state, not React state.
 export function EngineStatus() {
   const [running, setRunning] = useState(engineState.running);
   const [rpm, setRpm] = useState(engineState.rpm);

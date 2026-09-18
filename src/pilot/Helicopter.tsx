@@ -11,7 +11,6 @@ import { flightState } from "./flightState";
 import { bindKeyboardControls, consumeEngineToggle, consumeReset, controlInput } from "./inputState";
 import { engineState } from "./engineState";
 import { modelGroupRef } from "./modelGroupRef";
-import { sendFlightUpdate } from "../net/socket";
 
 const MODEL_SRC = "./models/helicopters_mh-6_little_bird/scene.gltf";
 
@@ -129,6 +128,15 @@ export function Helicopter() {
     const tailRotorNode = scene.getObjectByName(TAIL_ROTOR_NODE_NAME);
     mainRotorRef.current = mainRotorNode ? pivotOnOwnCenter(mainRotorNode) : null;
     tailRotorRef.current = tailRotorNode ? pivotOnOwnCenter(tailRotorNode) : null;
+
+    // FireControl raycasts from the nose outward; without this every shot
+    // would immediately self-intersect the fuselage mesh it originates
+    // next to. Setting raycast={() => null} on the wrapping <group> alone
+    // wouldn't do it — Raycaster.intersectObjects calls each descendant's
+    // own .raycast directly during traversal, so every mesh needs it.
+    scene.traverse((node) => {
+      node.raycast = () => {};
+    });
   }, [scene]);
 
   useEffect(() => bindKeyboardControls(), []);
@@ -239,10 +247,6 @@ export function Helicopter() {
     // Heading only (ignores pitch/roll) so the chase camera doesn't tilt
     // or spin with the aircraft's attitude.
     flightState.yaw = Math.atan2(-forward.x, -forward.z);
-
-    // Broadcast full attitude (not just yaw) to the gunner, whose camera is
-    // rigidly attached to the nose and needs pitch/roll too.
-    sendFlightUpdate(flightState.position, quat);
   });
 
   return (

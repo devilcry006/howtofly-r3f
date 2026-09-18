@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import "./TouchControls.css";
-import { requestEngineToggle, requestReset, requestViewToggle, setTouchStick } from "./inputState";
+import { requestEngineToggle, requestFire, requestReset, requestViewToggle, setTouchStick } from "./inputState";
 
 // Max distance (px) the knob can travel from center, matching the CSS
 // base/knob sizes below (60px base radius - 28px knob radius - a small margin).
@@ -111,6 +111,16 @@ export function TouchControls() {
         }}
       >
         👁 view
+      </button>
+      <button
+        type="button"
+        className="fire-button"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          requestFire();
+        }}
+      >
+        🔥 fire
       </button>
     </div>
   );

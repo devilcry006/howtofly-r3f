@@ -14,6 +14,7 @@ export function ControlHint() {
         <span>A / D — roll left / right</span>
         <span>Q / E — yaw left / right</span>
         <span>Shift / Ctrl — up / down</span>
+        <span>Space — fire</span>
       </div>
       <div className="touch-hint touch-hint-left">yaw • up/down</div>
       <div className="touch-hint touch-hint-right">roll • pitch</div>

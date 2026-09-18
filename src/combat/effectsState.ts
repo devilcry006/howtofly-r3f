@@ -1,9 +1,7 @@
-// Ephemeral bullet visuals (tracer lines + impact sparks): pushed locally
-// when this device fires, and from the network "shot" message when the
-// other device fires. Plain array mutation wouldn't trigger a React
-// re-render on its own, so `revision` is bumped on every spawn/prune and
-// BulletEffects polls it each frame (same read-every-frame style as
-// flightState/targetState).
+// Ephemeral bullet visuals (tracer lines + impact sparks), spawned by
+// FireControl. Plain array mutation wouldn't trigger a React re-render on
+// its own, so `revision` is bumped on every spawn/prune and BulletEffects
+// polls it each frame (same read-every-frame style as flightState/targetState).
 
 export type Tracer = {
   id: string;

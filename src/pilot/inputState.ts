@@ -86,6 +86,10 @@ const viewToggleAction = makeAction();
 export const requestViewToggle = viewToggleAction.request;
 export const consumeViewToggle = viewToggleAction.consume;
 
+const fireAction = makeAction();
+export const requestFire = fireAction.request;
+export const consumeFire = fireAction.consume;
+
 export function bindKeyboardControls() {
   const onKeyDown = (e: KeyboardEvent) => {
     const rawKey = e.key.toLowerCase();
@@ -94,6 +98,9 @@ export function bindKeyboardControls() {
       recomputeKeyboard();
       return;
     }
+    // Space also scrolls the page by default, so this needs to be
+    // suppressed on every keydown, not just the non-repeat one below.
+    if (rawKey === " ") e.preventDefault();
     if (e.repeat) return;
     if (rawKey === "i") {
       requestEngineToggle();
@@ -101,6 +108,8 @@ export function bindKeyboardControls() {
       requestReset();
     } else if (rawKey === "c") {
       requestViewToggle();
+    } else if (rawKey === " ") {
+      requestFire();
     }
   };
 
