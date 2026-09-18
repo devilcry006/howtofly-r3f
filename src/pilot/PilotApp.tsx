@@ -7,6 +7,7 @@ import { Helicopter } from "./Helicopter";
 import { HelicopterCamera } from "./HelicopterCamera";
 import { TouchControls } from "./TouchControls";
 import { ControlHint } from "./ControlHint";
+import { EngineStatus } from "./EngineStatus";
 import { Targets } from "../gunner/Targets";
 import { BulletEffects } from "../combat/BulletEffects";
 import { ConnectionStatus } from "../net/ConnectionStatus";
@@ -37,6 +38,7 @@ export function PilotApp() {
       </Canvas>
       <TouchControls />
       <ControlHint />
+      <EngineStatus />
       <ConnectionStatus />
     </div>
   );

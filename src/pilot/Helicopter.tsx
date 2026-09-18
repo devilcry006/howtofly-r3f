@@ -8,7 +8,8 @@ import {
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { flightState } from "./flightState";
-import { bindKeyboardControls, controlInput } from "./inputState";
+import { bindKeyboardControls, consumeEngineToggle, controlInput } from "./inputState";
+import { engineState } from "./engineState";
 import { sendFlightUpdate } from "../net/socket";
 
 // Measured from the loaded model (Box3().setFromObject) so the collider is
@@ -47,6 +48,15 @@ const COLLECTIVE_RATE = 0.9; // units/s ramp-up while Shift is held
 const COLLECTIVE_DECAY = 0.25; // units/s natural weakening while Shift is not held
 const MAX_LIFT_THRUST = 1.8; // multiple of weight produced at full collective, along local up
 
+// Engine: press I to toggle ignition. Rotor rpm ramps up/down rather than
+// snapping, and both lift and attitude authority below scale with rpm — so
+// there's no separate "can I take off yet" flag, full collective just can't
+// out-thrust gravity (needs rpm > 1/MAX_LIFT_THRUST, i.e. above ~56%) until
+// the rotor has spun up far enough. Spin-down is slower than spin-up since a
+// real rotor keeps freewheeling for a while after the engine cuts.
+const ENGINE_SPINUP_RATE = 1 / 4; // rpm/s while running (~4s to full rpm)
+const ENGINE_SPINDOWN_RATE = 1 / 7; // rpm/s while off (~7s to fully stop)
+
 export function Helicopter() {
   const bodyRef = useRef<RapierRigidBody>(null);
   // Nested purely so we can read an interpolated world position for
@@ -62,6 +72,20 @@ export function Helicopter() {
   useFrame((_, delta) => {
     const body = bodyRef.current;
     if (!body) return;
+
+    // -----------------
+    // Engine: toggled on/off, rotor rpm ramps/decays independently of collective.
+    // -----------------
+
+    if (consumeEngineToggle()) {
+      engineState.running = !engineState.running;
+    }
+    engineState.rpm = THREE.MathUtils.clamp(
+      engineState.rpm +
+        (engineState.running ? ENGINE_SPINUP_RATE : -ENGINE_SPINDOWN_RATE) * delta,
+      0,
+      1,
+    );
 
     // -----------------
     // Input (keyboard and touch joysticks both feed the same analog axes)
@@ -100,15 +124,22 @@ export function Helicopter() {
     const mass = body.mass();
     const weight = mass * GRAVITY;
 
+    // Both attitude authority and lift come from the rotor wash, so both
+    // scale with rpm — a cold rotor gives no control and no thrust, not just
+    // no thrust, matching a real helicopter at engine-off.
+    const rpm = engineState.rpm;
+
     const torque = new THREE.Vector3()
-      .addScaledVector(right, pitchInput * PITCH_TORQUE * mass)
-      .addScaledVector(forward, rollInput * ROLL_TORQUE * mass)
-      .addScaledVector(up, yawInput * YAW_TORQUE * mass);
+      .addScaledVector(right, pitchInput * PITCH_TORQUE * mass * rpm)
+      .addScaledVector(forward, rollInput * ROLL_TORQUE * mass * rpm)
+      .addScaledVector(up, yawInput * YAW_TORQUE * mass * rpm);
 
     // Thrust fires along the body's own up axis, so tilting it (via the
     // torque above) is what redirects thrust into horizontal movement —
     // just like a real rotorcraft, instead of a scripted horizontal force.
-    const force = up.clone().multiplyScalar(collective.current * MAX_LIFT_THRUST * weight);
+    const force = up
+      .clone()
+      .multiplyScalar(collective.current * MAX_LIFT_THRUST * rpm * weight);
 
     body.resetForces(true);
     body.addForce(force, true);
@@ -142,7 +173,7 @@ export function Helicopter() {
         mass={1}
       />
       <group ref={modelRef}>
-        <Gltf scale={0.01} src={"./models/scene.gltf"} />
+        <Gltf scale={1} rotateZ={180} src={"./models/helicopters_mh-6_little_bird/scene.gltf"} />
       </group>
     </RigidBody>
   );

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import "./TouchControls.css";
-import { setTouchStick } from "./inputState";
+import { requestEngineToggle, setTouchStick } from "./inputState";
 
 // Max distance (px) the knob can travel from center, matching the CSS
 // base/knob sizes below (60px base radius - 28px knob radius - a small margin).
@@ -75,12 +75,23 @@ function JoystickPad({ side }: { side: "left" | "right" }) {
 
 // Two on-screen virtual joysticks for touch devices, mirroring a Mode-2 RC
 // transmitter: left stick = yaw + collective, right stick = pitch + roll.
-// Hidden on fine-pointer (mouse/trackpad) devices via CSS.
+// Hidden on fine-pointer (mouse/trackpad) devices via CSS. The engine button
+// is a discrete toggle (mirrors the I key), not a stick axis.
 export function TouchControls() {
   return (
     <div className="touch-controls">
       <JoystickPad side="left" />
       <JoystickPad side="right" />
+      <button
+        type="button"
+        className="engine-button"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          requestEngineToggle();
+        }}
+      >
+        ⏻ engine
+      </button>
     </div>
   );
 }

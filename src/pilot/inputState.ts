@@ -57,12 +57,31 @@ function recomputeKeyboard() {
   keyboard.collective = pressed.shift ? 1 : pressed.c ? -1 : 0;
 }
 
+// Engine ignition is a discrete on/off toggle (I key or the touch button),
+// not an analog axis, so it's queued on the press edge and drained once by
+// Helicopter each frame rather than tracked as held/released state.
+let engineToggleQueued = false;
+
+export function requestEngineToggle() {
+  engineToggleQueued = true;
+}
+
+export function consumeEngineToggle(): boolean {
+  if (!engineToggleQueued) return false;
+  engineToggleQueued = false;
+  return true;
+}
+
 export function bindKeyboardControls() {
   const onKeyDown = (e: KeyboardEvent) => {
-    const key = e.key.toLowerCase() as Key;
-    if (key in pressed) {
-      pressed[key] = true;
+    const rawKey = e.key.toLowerCase();
+    if (rawKey in pressed) {
+      pressed[rawKey as Key] = true;
       recomputeKeyboard();
+      return;
+    }
+    if (rawKey === "i" && !e.repeat) {
+      requestEngineToggle();
     }
   };
 

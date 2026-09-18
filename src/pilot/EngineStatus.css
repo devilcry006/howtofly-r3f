@@ -1,0 +1,20 @@
+.engine-status {
+  position: fixed;
+  top: calc(max(10px, env(safe-area-inset-top)) + 34px);
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 20;
+  font: 12px/1 ui-monospace, Consolas, monospace;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  pointer-events: none;
+}
+
+.engine-status.running {
+  color: #7CFC9A;
+}
+
+.engine-status.off {
+  color: #FFD166;
+}
