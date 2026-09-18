@@ -1,0 +1,11 @@
+Model Information:
+* title:	Helicopters MH-6 Little Bird
+* source:	https://sketchfab.com/3d-models/helicopters-mh-6-little-bird-69cb05db3fc3483cb729734262abf28e
+* author:	mario low poly (https://sketchfab.com/mariogpymario117)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Helicopters MH-6 Little Bird" (https://sketchfab.com/3d-models/helicopters-mh-6-little-bird-69cb05db3fc3483cb729734262abf28e) by mario low poly (https://sketchfab.com/mariogpymario117) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
