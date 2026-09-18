@@ -1,16 +1,40 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { Gltf } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import {
   RigidBody,
   CuboidCollider,
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { flightState } from "./flightState";
-import { bindKeyboardControls, consumeEngineToggle, controlInput } from "./inputState";
+import { bindKeyboardControls, consumeEngineToggle, consumeReset, controlInput } from "./inputState";
 import { engineState } from "./engineState";
 import { sendFlightUpdate } from "../net/socket";
+
+const MODEL_SRC = "./models/helicopters_mh-6_little_bird/scene.gltf";
+
+// The GLTF bakes every node's geometry at its final position with no
+// per-node translation/rotation (checked in scene.gltf: every node up to the
+// blade meshes is identity), so a blade node's own local origin sits at the
+// model's origin, not its hub — spinning the node directly would swing the
+// whole blade around that origin instead of turning it in place. This
+// re-parents the node under a fresh pivot group placed at the node's own
+// bounding-box center (its hub, since the blades are modeled symmetric
+// around it), preserving its rendered position, so the pivot is what spins.
+function pivotOnOwnCenter(node: THREE.Object3D): THREE.Object3D {
+  const parent = node.parent;
+  if (!parent) return node;
+  parent.updateWorldMatrix(true, true);
+  const centerWorld = new THREE.Box3().setFromObject(node).getCenter(new THREE.Vector3());
+  const centerLocal = parent.worldToLocal(centerWorld);
+  const pivot = new THREE.Group();
+  pivot.position.copy(centerLocal);
+  parent.add(pivot);
+  pivot.add(node);
+  node.position.sub(centerLocal);
+  return pivot;
+}
 
 // Measured from the loaded model (Box3().setFromObject) so the collider is
 // one solid box sized to the fuselage/skids instead of react-three-rapier's
@@ -57,6 +81,23 @@ const MAX_LIFT_THRUST = 1.8; // multiple of weight produced at full collective, 
 const ENGINE_SPINUP_RATE = 1 / 4; // rpm/s while running (~4s to full rpm)
 const ENGINE_SPINDOWN_RATE = 1 / 7; // rpm/s while off (~7s to fully stop)
 
+// Node names from scene.gltf: "helice" (Spanish for propeller) is the main
+// rotor (the big X-shaped mesh spinning about the mast, i.e. local Y), and
+// "helice 2_2" is the small tail rotor (spinning about local X, sideways).
+// GLTFLoader sanitizes node names (spaces -> underscores) on parse, so these
+// have to match the runtime names, not the raw names in scene.gltf's JSON.
+const MAIN_ROTOR_NODE_NAME = "helice_1_3";
+const TAIL_ROTOR_NODE_NAME = "helice_2_2";
+const MAIN_ROTOR_MAX_SPEED = Math.PI * 12; // rad/s at full rpm (~6 rev/s, visually readable)
+const TAIL_ROTOR_MAX_SPEED = Math.PI * 40; // rad/s at full rpm (~20 rev/s, small prop reads as a blur)
+
+// Reset: press R (or the touch button) to snap back to the spawn transform
+// with zero velocity, engine off and rotors stopped — matches the RigidBody's
+// own initial position/rotation below so a reset looks identical to a fresh load.
+const SPAWN_POSITION = { x: 0, y: 2, z: 0 };
+const SPAWN_ROTATION = { x: 0, y: 0, z: 0, w: 1 };
+const ZERO_VECTOR = { x: 0, y: 0, z: 0 };
+
 export function Helicopter() {
   const bodyRef = useRef<RapierRigidBody>(null);
   // Nested purely so we can read an interpolated world position for
@@ -67,11 +108,47 @@ export function Helicopter() {
 
   const collective = useRef(0); // 0..1, ramps/decays, never snaps
 
+  // Rotor pivots are plain THREE.Object3D refs (not React state) since
+  // they're mutated every frame in useFrame below — same pattern as bodyRef
+  // and modelRef, and required so a memoized value isn't mutated post-render.
+  const mainRotorRef = useRef<THREE.Object3D | null>(null);
+  const tailRotorRef = useRef<THREE.Object3D | null>(null);
+
+  const gltf = useGLTF(MODEL_SRC);
+  // Cloned so repeated mounts (Strict Mode, HMR) each restructure their own
+  // copy instead of re-pivoting (and double-rotating) the shared cached scene.
+  const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
+
+  // Pivoting mutates scene's subtree structure and refs can't be written
+  // during render, so this runs post-commit rather than inside the useMemo above.
+  useEffect(() => {
+    const mainRotorNode = scene.getObjectByName(MAIN_ROTOR_NODE_NAME);
+    const tailRotorNode = scene.getObjectByName(TAIL_ROTOR_NODE_NAME);
+    mainRotorRef.current = mainRotorNode ? pivotOnOwnCenter(mainRotorNode) : null;
+    tailRotorRef.current = tailRotorNode ? pivotOnOwnCenter(tailRotorNode) : null;
+  }, [scene]);
+
   useEffect(() => bindKeyboardControls(), []);
 
   useFrame((_, delta) => {
     const body = bodyRef.current;
     if (!body) return;
+
+    // -----------------
+    // Reset: snap back to spawn, zero velocity, engine off, rotors stopped.
+    // -----------------
+
+    if (consumeReset()) {
+      body.setTranslation(SPAWN_POSITION, true);
+      body.setRotation(SPAWN_ROTATION, true);
+      body.setLinvel(ZERO_VECTOR, true);
+      body.setAngvel(ZERO_VECTOR, true);
+      collective.current = 0;
+      engineState.running = false;
+      engineState.rpm = 0;
+      mainRotorRef.current?.rotation.set(0, 0, 0);
+      tailRotorRef.current?.rotation.set(0, 0, 0);
+    }
 
     // -----------------
     // Engine: toggled on/off, rotor rpm ramps/decays independently of collective.
@@ -86,6 +163,13 @@ export function Helicopter() {
       0,
       1,
     );
+
+    if (mainRotorRef.current) {
+      mainRotorRef.current.rotation.y += MAIN_ROTOR_MAX_SPEED * engineState.rpm * delta;
+    }
+    if (tailRotorRef.current) {
+      tailRotorRef.current.rotation.x += TAIL_ROTOR_MAX_SPEED * engineState.rpm * delta;
+    }
 
     // -----------------
     // Input (keyboard and touch joysticks both feed the same analog axes)
@@ -173,7 +257,7 @@ export function Helicopter() {
         mass={1}
       />
       <group ref={modelRef}>
-        <Gltf scale={1} rotateZ={180} src={"./models/helicopters_mh-6_little_bird/scene.gltf"} />
+        <primitive object={scene} />
       </group>
     </RigidBody>
   );

@@ -8,6 +8,7 @@ export function ControlHint() {
     <>
       <div className="control-hint-keyboard">
         <span>I — start / stop engine</span>
+        <span>R — reset</span>
         <span>W / S — pitch forward / back</span>
         <span>A / D — roll left / right</span>
         <span>Q / E — yaw left / right</span>
